@@ -42,8 +42,7 @@ struct ListNode *deleteDuplicates(struct ListNode *head)
             Use variable prev to record now we traverse
             and simply check two nodes behind it are duplicate or not
 
-            if two nodes behind it are duplicate , deal with it
-            otherwise just traverse next node
+            if list have more than one node , we enter the loop , otherwise we return head
         */
         if (current->next->next && current->next->val == current->next->next->val)
         {
