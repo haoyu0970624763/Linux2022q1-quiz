@@ -8,12 +8,6 @@ struct ListNode
 
 struct ListNode *deleteDuplicates(struct ListNode *head)
 {
-
-    if (!head)
-    {
-        return NULL;
-    }
-
     /* Deal with the duplicate case appear in head */
     while (head)
     {
@@ -37,16 +31,12 @@ struct ListNode *deleteDuplicates(struct ListNode *head)
         }
     }
 
-    if (!head)
-    {
-        return NULL;
-    }
     /* use current to traverse the list */
     struct ListNode *current = head;
 
     /* In here , first node will definitely not equal to second node , if there has second node */
     /* if list have just one node , we just return it , otherwise we deal with it */
-    while (current->next)
+    while (current && current->next)
     {
         /*
             Use variable prev to record now we traverse

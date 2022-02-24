@@ -1,5 +1,4 @@
 /* Linux-like doubly-linked list implementation */
-
 #pragma once
 
 #ifdef __cplusplus
