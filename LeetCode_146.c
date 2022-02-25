@@ -41,7 +41,7 @@ LRUCache *lRUCacheCreate(int capacity)
 void lRUCacheFree(LRUCache *obj)
 {       
     LRUNode *lru, *n;
-    list_for_each_entry_safe(lru, n, &obj->dhead, dlink) {
+    list_for_each_entry_safe(lru, n, &obj-> dhead, dlink) {
         list_del(&lru->dlink);
         free(lru);
     }
@@ -108,6 +108,7 @@ void lRUCachePut(LRUCache *obj, int key, int value)
     */
     if (obj->count == obj->capacity) {
         lru = list_last_entry(&obj->dhead, LRUNode, dlink);
+        indexTable[lru->key]=0;
         list_del(&lru->dlink);
         list_del(&lru->hlink);
     } else {
