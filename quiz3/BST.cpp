@@ -36,14 +36,3 @@ void remove_data(tree &t, int d) {
   delete q;
 }
 
-typedef struct tnode *tree;
-struct tnode {
-  int data;
-  tnode *left;
-  tnode *right;
-  tnode(int d) {
-    data = d;
-    left = right = 0;
-  }
-};
-
