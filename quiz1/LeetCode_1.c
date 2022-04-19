@@ -23,7 +23,7 @@ map_t *map_init(int bits) {
   map->ht = malloc(sizeof(struct hlist_head) * MAP_HASH_SIZE(map->bits));
   if (map->ht) {
     for (int i = 0; i < MAP_HASH_SIZE(map->bits); i++)
-      /*初始化每一個 hash table entry*/
+      /* 初始化每一個雜湊表中的 entry */
       (map->ht)[i].first = NULL;
   } else {
     free(map);
@@ -51,7 +51,7 @@ static inline unsigned int hash(unsigned int val, unsigned int bits) {
 }
 
 static struct hash_key *find_key(map_t *map, int key) {
-  /* 去尋找特定 key 值有沒有存在於hash table
+  /* 去尋找特定 key 值有沒有存在於雜湊表
    * hash(key, map->bits) 是計算此 key 值應該在哪個 entry
    * 在對應的 entry 中依照 linked list 依序搜尋 key 值有無存在
    * */
@@ -69,7 +69,7 @@ void *map_get(map_t *map, int key) {
 }
 
 void map_add(map_t *map, int key, void *data) {
-  /* 先看此 key 值在不在 hash table中 , 不在的話再加進去*/
+  /* 先看此 key 值是否存在於雜湊表中,不在的話再繼續 */
   struct hash_key *kn = find_key(map, key);
   if (kn)
     return;
@@ -77,25 +77,25 @@ void map_add(map_t *map, int key, void *data) {
   kn = malloc(sizeof(struct hash_key));
   kn->key = key, kn->data = data;
 
-  /*
-   * h 為 指向 hash table 相對應之 entry 之位址的 poniter
-   * n 為 指向上面分配的資料結構空間中的 node 位址的 pointer
-   * first 為指向 hash table 相對應之 entry 的首個節點
+  /* h 指向雜湊表中相對應 entry 的位址
+   * first 指向雜湊表中相對應 entry 的首個節點位址
+   * n 指向剛分配的資料結構中的 node 位址
    * */
   struct hlist_head *h = &map->ht[hash(key, map->bits)];
   struct hlist_node *n = &kn->node, *first = h->first;
-  /*
-   * n->next = first 把原本相對應之 entry 的首個節點接在新分配的節點後面
+  /* n->next = first
+   * 把原本雜湊表中相對應 entry 的首個節點接在新分配的節點後面
    *
    * if (first) first->pprev = &n->next
-   * 如果原本相對應之 entry 的首個節點 不為空
-   * 則把他的 pprev 改為 指向自己的 adderess 之 pointer
+   * 如果原本雜湊表中相對應 entry 的首個節點存在的話
+   * 將他的 pprev 指向 指向新分配的節點的 next 位址
    *
-   * h->first = n 改變相對應 entry 串列的頭
-   * n->pprev 改為 指向自己的 adderess 之 pointer
+   * h->first = n
+   * 改變雜湊表中相對應 entry 所指向的首個節點
    *
-   * 其實可以改寫成
-   * first->pprev = &first 以及 n->pprev = &n
+   * n->pprev = &h->first
+   * 將新分配的節點的 pprev 指向 指向雜湊表中相對應 entry 的位址
+   * 可搭配題目上方的圖示可以更好的理解此部份
    * */
   n->next = first;
   if (first)
@@ -107,10 +107,10 @@ void map_deinit(map_t *map) {
   if (!map)
     return;
 
-  /* 造訪每一個 hash table entry*/
+  /* 造訪雜湊表中的每一個 entry*/
   for (int i = 0; i < MAP_HASH_SIZE(map->bits); i++) {
     struct hlist_head *head = &map->ht[i];
-    /* 造訪每一個 hash table entry 內部連結的節點 */
+    /* 造訪雜湊表中的每一個 entry 內部連結的節點 */
     for (struct hlist_node *p = head->first; p;) {
       struct hash_key *kn = container_of(p, struct hash_key, node);
       /* n 紀錄目前節點
@@ -118,9 +118,9 @@ void map_deinit(map_t *map) {
       struct hlist_node *n = p;
       p = p->next;
 
-      /*
-       * 從 map_add 我們可以發現 pprev 的意義是指向自己位址的 pointer
-       * 所以若指向自己的位址為 null 則跳至 bail */
+      /* 如果當前的節點的 pprev 為空(非正常行為)
+       * 跳至 bail 標籤 , 否則的話處理以下行為
+       * */
       if (!n->pprev) /* unhashed */
         goto bail;
 
@@ -138,26 +138,32 @@ void map_deinit(map_t *map) {
   free(map);
 }
 int *twoSum(int *nums, int numsSize, int target, int *returnSize) {
-  /* 雜湊表初始化 , 其實 init(數字) 設成 10 以外的數字也可以
-   * 雜湊表越大 , 平均尋找時間越短 , 但記憶體消耗更大
+  /* 雜湊表的建立 , 設置雜湊表的 entry 總數為 1024
+   * (要設置除了 1024 以外的數字也可以)
+   * 通常來說雜湊表 entry 數越多 , 平均尋找時間越短 ,但記憶體消耗更大
    * */
   map_t *map = map_init(10);
   *returnSize = 0;
   int *ret = malloc(sizeof(int) * 2);
+  /* if mallocing the memory of return address fail , direct to the end of code
+   */
   if (!ret)
     goto bail;
 
   for (int i = 0; i < numsSize; i++) {
-    /*尋找此 input 對應之數字 有沒有在雜湊表
-     * 例如： 要找相加為9 , input為2 就要找 7 有沒有在雜湊表*/
+    /* 尋找當前 input 對應 target 之數字是否存在於雜湊表中
+     * 例如：要找兩數相加為9 , 當前 input 為 2 , 就要找 7
+     * 這個數字是否存在於雜湊表
+     * */
     int *p = map_get(map, target - nums[i]);
     if (p) { /* found */
       ret[0] = i, ret[1] = *p;
       *returnSize = 2;
       break;
     }
-    /*如果對應之數字不在雜湊表 , 就把此 input 加至雜湊表 , 以供後續 input
-     * 尋找相對應的數字*/
+    /* 如果當前 input 對應 target 之數字不存在於雜湊表中
+     * 就把此 input 加至雜湊表裡面
+     * */
     p = malloc(sizeof(int));
     *p = i;
     map_add(map, nums[i], p);
