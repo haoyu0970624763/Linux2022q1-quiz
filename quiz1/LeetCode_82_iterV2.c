@@ -9,7 +9,7 @@ struct ListNode *deleteDuplicates(struct ListNode *head) {
   if (!head)
     return NULL;
 
-  struct ListNode **ptr= &head;
+  struct ListNode **ptr = &head;
   struct ListNode *current = head;
 
   while (current) {
